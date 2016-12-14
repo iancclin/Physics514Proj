@@ -11,29 +11,29 @@ hbar = 1;
 xL = 0; xR = 1;
 nodes = 10000;
 
-states = 0:1:5;
-c = 0:1:400;
+% define how many states we want to investigate
+states = 0:1:2;
+% define the constant for the potential well
+c = 200;
+V = @(x) c*(x.^2-x).*(abs(x-0.5)<=0.5);
+% harmonic well used for testing Numerov algorithm
+% V = @(x) (0.5*x.^2);
+plot(xL:0.01:xR,V(xL:0.01:xR),'k-');
+hold on;
 
-state = 1;
+%% define the start points and allocate the variable
+% start from finding the ground state
+psi = [];
+energy = [];
+position = [];
 
-%% define potential well
 
-eplot = zeros(1,length(c));
-
-for k = 1:length(c)
-    V = @(x) c(k)*(x.^2-x).*(abs(x-0.5)<=0.5);
-    % harmonic well used for testing Numerov algorithm
-    % V = @(x) (0.5*x.^2);
+for s = 1:length(states)
+    state = states(s);
     
-    %% define the start points and allocate the variable
-    % start from finding the ground state
-    psi = [];
-    energy = [];
-    position = [];
     % The gournd staet will be, in general, at neither the top nor the bottom
     % of the potential well. As a result, initialize it as the point in
     % between.
-    
     xmin = 0.5*(xL+xR);
     Emin = V(xmin);
     xmax = xL;
@@ -113,11 +113,19 @@ for k = 1:length(c)
             diffVal = diffPsibR/psiR(1) - diffPsibL/psiL(end);
             if abs(diffVal) < tol
                 energy(state+1) = E;
+                % normalize the wavefunction
+                positionTailL = gridL(1)-(1000*hL:-hL:hL);
+                positionTailR = gridR(end)+hR:hR:10000*hR;
                 position(state+1,:) = [gridL gridR(2:end)];
+                position(state+1,:) = [positionTailL position(state+1,:) positionTailR];
+                psiTailL = exp(-(0.5-((10000*hL:-hL:hL));
+                psiTailR = exp(-(0.5-hR:hR:10000*hR)):
+                psiR = [psiR psiTailR];
+                psiL = [psiTailL psiL];
                 psiR = psiR*(psiL(end)/psiR(1));
-                intL = hL*sum((0.5*(psiL(1:end-1)+psiL(2:end))).^2);
-                intR = hR*sum((0.5*(psiR(1:end-1)+psiR(2:end))).^2);
-                normPsi = intL+intR;
+                intL = hL*sum(0.5*(psiL(1:end-1).^2+psiL(2:end).^2));
+                intR = hR*sum(0.5*(psiR(1:end-1).^2+psiR(2:end).^2));
+                normPsi = sqrt(intL+intR);
                 psi(state+1,:) = [psiL psiR(2:end)]/normPsi;
                 break;
             elseif diffVal > 0
@@ -130,18 +138,17 @@ for k = 1:length(c)
                 b = 0.5*(xmin+xmax);
             end
         end
-        
-        %res = [test x'];
     end
-    %plot(position(state+1,:),psi(state+1,:));
     if iter > maxIter
         fprintf('unable to find the solution of state %d.\n', state);
     end
-    if isempty(energy)
-        eplot(k) = 0;
-    else
-        eplot(k) = energy(state+1);
-    end
+%     if isempty(energy)
+%         eplot(k) = 0;
+%     else
+%         eplot(k) = energy(state+1);
+%     end
+    plot(position(state+1,:),3*psi(state+1,:)+energy(state+1));
 end
-plot(c,eplot);
-hold on;
+xlabel('x');
+ylabel('energy');
+legend('ground state','1st excited state','2nd excited state','3rd excited state');
