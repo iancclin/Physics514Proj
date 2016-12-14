@@ -1,5 +1,5 @@
 clc;
-n = 8;
+n = 50;
 numeig = 6;
 
 arr = sqrt(1:n)';
@@ -21,8 +21,10 @@ end
 
 valex(1:end,:) = valex(end:-1:1,:);
 for i = 1:numeig
-    plot(lam,valex(i,:),'--');
+    plot(lam,valex(i,:),'k-');
     hold on;
+    plot(lam,val(i,:),'b--');
 end
+legend('direct','Lanczos');
 xlabel('lambda');
 ylabel('energy');
